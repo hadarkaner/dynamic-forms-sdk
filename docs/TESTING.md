@@ -4,7 +4,7 @@
 
 לפני הכול, הריצו את ה-backend (`cd backend && npm run dev`, ברירת מחדל `http://localhost:4000`) ווודאו שהוא מחובר ל-PostgreSQL (`GET /health` אמור להחזיר `{"success":true,...}`).
 
-## דרך 1 — דרך הממשק (Developer Portal + mobile-demo-app)
+## דרך 1 — דרך הממשק (Developer Portal + curl בתור המבקר)
 
 1. **הרצת הפורטל:**
    ```bash
@@ -18,36 +18,25 @@
 
 4. **פרסום הטופס:** בעמוד העריכה של הטופס, לחצו **Publish**. הסטטוס יתחלף מ-`Draft` ל-`Published`. שימו לב ל-`formId` שמופיע בכתובת ה-URL (`/forms/<formId>`) — הוא הציבורי.
 
-5. **טעינת הטופס ב-mobile-demo-app:** הדביקו את ה-`formId` (ואת כתובת ה-API) ב-`mobile-demo-app/src/config.ts`, ואז:
+5. **סימולציה של מבקר** (עומד בתור `sdk/client`, ללא מפתח כלל):
    ```bash
-   cd sdk/client && npm install && npm run build
-   cd ../../mobile-demo-app && npm install && npm run sync-sdk && npm start
+   FORM_ID=<הדביקו כאן את ה-formId מהשלב הקודם>
+   curl -s http://localhost:4000/api/v1/public/forms/$FORM_ID
+   curl -s -X POST http://localhost:4000/api/v1/public/forms/$FORM_ID/submissions \
+     -H "Content-Type: application/json" -d '{"data":{"שם":"דורין","אימייל":"dorin@example.com"}}'
+   curl -s -X POST http://localhost:4000/api/v1/public/forms/$FORM_ID/events \
+     -H "Content-Type: application/json" -d '{"type":"VIEW"}'
+   curl -s -X POST http://localhost:4000/api/v1/public/forms/$FORM_ID/events \
+     -H "Content-Type: application/json" -d '{"type":"SUBMIT"}'
    ```
-   סרקו את ה-QR עם Expo Go ולחצו **Open Survey** (או המתינו ל-delay האוטומטי). הטופס יירונדר בתוך ה-WebView על בסיס הסכמה שהוגדרה בפורטל — ללא מפתח API בכלל. פירוט מלא ב-[mobile-demo-app/README.md](../mobile-demo-app/README.md).
 
-6. **שליחת תשובה:** מלאו את הטופס בדמו ולחצו **Submit**. אמור להופיע מסך תודה, וה-bottom sheet נסגר אוטומטית.
+6. **צפייה ב-submission:** חזרה לפורטל, בעמוד הטופס → **Submissions**. התשובה שנשלחה אמורה להופיע ברשימה עם חותמת זמן.
 
-7. **צפייה ב-submission:** חזרה לפורטל, בעמוד הטופס → **Submissions**. התשובה שנשלחה אמורה להופיע ברשימה עם חותמת זמן.
-
-8. **צפייה באנליטיקס:** בעמוד הטופס → **Analytics**. אמורים להופיע: `VIEW` (מטעינת הדמו), `START` (מהפוקוס הראשון בשדה), `FIELD_FOCUS`/`FIELD_CHANGE` לכל שדה שמולא, ו-`SUBMIT`. ה-`conversionRate` (יחס `SUBMIT`/`VIEW`) אמור לשקף את הפעולה.
+7. **צפייה באנליטיקס:** בעמוד הטופס → **Analytics**. אמורים להופיע `VIEW` ו-`SUBMIT`, וה-`conversionRate` (יחס `SUBMIT`/`VIEW`) אמור לשקף את הפעולה.
 
 ## תרחיש הדגמה: עדכון טופס מוטמע בלי redeploy
 
-תרחיש זה מדגים את הערך המרכזי של ה-SDK (ראו [docs/ARCHITECTURE.md](ARCHITECTURE.md)): המפתח מטמיע את הטופס פעם אחת, ולעדכן אותו לא דורש שינוי קוד באתר המוטמע — רק פרסום גרסה חדשה בפורטל.
-
-1. **יצירה ופרסום של v1** — בפורטל (`http://localhost:5173`), עמוד **Forms** → **+ Create form**. תנו כותרת ושדה אחד (למשל `שם` מסוג `TEXT`), שמרו, ולחצו **Publish**. שמרו את ה-`formId` מה-URL.
-
-2. **טעינה ב-mobile-demo-app** — הציבו את ה-`formId` ב-`mobile-demo-app/src/config.ts` (`DEMO_FORM_ID`), הריצו `npm start`, וסרקו עם Expo Go. הטופס נטען אוטומטית בתוך ה-WebView ומציג את שדה `שם` בלבד — בלי שום קוד שמכיר את התוכן הספציפי הזה (ה-app רק מטמיע `formId`).
-
-3. **יצירת v2 עם שדה חדש** — חזרה לפורטל, בעמוד עריכת הטופס הוסיפו שדה נוסף (למשל `הערות` מסוג `TEXTAREA`) ולחצו **Save as v2**. שימו לב: הגרסה החיה עדיין v1 — ה-app לא משתנה בשלב הזה.
-
-4. **פרסום v2** — לחצו **Publish v2** (או דרך עמוד **History**: **Publish this version** על v2). עכשיו v2 היא הגרסה החיה.
-
-5. **פתיחה מחדש של הסקר באותו `formId`** — סגרו את ה-bottom sheet ופתחו אותו שוב (או Reload מלא של Expo Go), **בלי לשנות שום קובץ באפליקציה ובלי להריץ build מחדש** — ה-WebView שולף מחדש את הסכמה בכל `mount()`.
-
-6. **אימות שהשדה החדש מופיע** — הטופס המרונדר אמור להציג כעת גם את שדה `הערות`, בלי ששינינו קוד כלשהו באפליקציה. זו ההוכחה שהעדכון מגיע מהשרת בכל טעינה, ולא מתוכן שנארז בזמן build.
-
-### אותו תרחיש דרך `curl`
+תרחיש זה מדגים את הערך המרכזי של ה-SDK (ראו [docs/ARCHITECTURE.md](ARCHITECTURE.md)): המפתח מטמיע את הטופס פעם אחת, ולעדכן אותו לא דורש שינוי קוד באתר המוטמע — רק פרסום גרסה חדשה בפורטל. הדרך הפשוטה ביותר להוכיח את זה בלי תלות בשום client מרונדר היא לשלוף את הנתיב הציבורי ישירות, לפני ואחרי פרסום גרסה חדשה, ולראות שה-`formId` לא השתנה בעוד התוכן כן:
 
 ```bash
 BASE=http://localhost:4000/api/v1

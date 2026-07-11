@@ -4,7 +4,7 @@
 
 ## סקירה כללית
 
-הפרויקט מורכב מחמישה רכיבים עצמאיים שחולקים API אחד:
+הפרויקט מורכב מארבעה רכיבים עצמאיים שחולקים API אחד:
 
 | רכיב | תיאור | טכנולוגיה |
 |---|---|---|
@@ -12,7 +12,6 @@
 | `frontend` | Developer Portal — ממשק ניהול לבניית טפסים, פרסום, צפייה ב-submissions ואנליטיקס, ניהול מפתחות | React, TypeScript, Vite |
 | `sdk/client` | SDK להטמעת טופס מפורסם באתר צד שלישי, ללא מפתח סודי | TypeScript, נבנה ל-ESM/CJS/IIFE |
 | `sdk/server` | SDK ל-Node.js לניהול טפסים מקוד שרת, באמצעות מפתח סודי | TypeScript |
-| `mobile-demo-app` | אפליקציית הדגמה שמטמיעה את `sdk/client` בתוך native app, דרך WebView בתוך bottom sheet | Expo, React Native, TypeScript |
 
 ## ערך מרכזי של ה-SDK: עדכון תוכן בלי redeploy
 
@@ -53,13 +52,13 @@
         ┌─────────▼─────────┐                                 ┌─────────▼─────────┐
         │     frontend       │                                 │     sdk/client      │
         │ Developer Portal   │                                 │  (חבילת דפדפן)      │
-        │ (React, port 5173) │                                 └─────────▲───────────┘
-        └─────────────────────┘                                          │ import / <script>,
-                  ▲                                                      │ או מוטמע ב-WebView
-                  │ import (Node)                              ┌─────────┴───────────┐
-        ┌─────────┴─────────┐                                  │   mobile-demo-app     │
-        │     sdk/server      │                                 │ (Expo · bottom sheet)  │
-        │  (חבילת Node.js)    │                                 └───────────────────────┘
+        │ (React, port 5173) │                                 └─────────────────────┘
+        └─────────────────────┘                                          ▲
+                  ▲                                                      │ import / <script>
+                  │ import (Node)                                        │
+        ┌─────────┴─────────┐                                (מוטמע באתר צד שלישי)
+        │     sdk/server      │
+        │  (חבילת Node.js)    │
         └─────────────────────┘
 ```
 
@@ -92,8 +91,6 @@ DynamicFormsSDK
 ├── sdk/
 │   ├── client/           @dynamic-forms-sdk/client — SDK לדפדפן
 │   └── server/           @dynamic-forms-sdk/server — SDK ל-Node.js
-│
-├── mobile-demo-app/      אפליקציית הדגמה (Expo) לאינטגרציה עם sdk/client בתוך WebView
 │
 ├── database/             נכסי DB עצמאיים (seed data, דיאגרמות)
 ├── docs/
@@ -151,16 +148,6 @@ npm run build
 
 ראו [sdk/server/README.md](sdk/server/README.md) לדוגמאות שימוש.
 
-### 5. mobile-demo-app
-
-```bash
-cd sdk/client && npm install && npm run build
-cd ../../mobile-demo-app && npm install && npm run sync-sdk   # מטמיע את ה-bundle של sdk/client
-npm start                    # Expo — לסרוק QR עם Expo Go
-```
-
-לפני הרצה, חשוב שיהיה ב-backend טופס שפורסם (`isPublished: true`) — אפשר ליצור אחד דרך ה-Developer Portal ולפרסם אותו, ואז להדביק את ה-`formId` (ואת כתובת ה-API) ב-`mobile-demo-app/src/config.ts`. פירוט מלא, כולל ההבדל בין אמולטור לטלפון פיזי, ב-[mobile-demo-app/README.md](mobile-demo-app/README.md).
-
 ## משתני סביבה
 
 | קובץ | משתנה | משמעות | דוגמה |
@@ -169,8 +156,6 @@ npm start                    # Expo — לסרוק QR עם Expo Go
 | `backend/.env` | `NODE_ENV` | סביבת הרצה | `development` |
 | `backend/.env` | `DATABASE_URL` | מחרוזת חיבור ל-PostgreSQL | `postgresql://user:pass@host/db?sslmode=require` |
 | `frontend/.env` | `VITE_API_BASE_URL` | כתובת בסיס ל-API | `http://localhost:4000/api/v1` |
-
-`mobile-demo-app` לא משתמש ב-`.env` — הקונפיגורציה המקבילה (`API_BASE_URL`, `DEMO_FORM_ID`) נמצאת ישירות ב-`mobile-demo-app/src/config.ts`.
 
 ## זרימת ה-API (API Flow)
 
@@ -194,7 +179,7 @@ x-api-key: dfsdk_xxxxxxxxxxxxxxxxxxxx
 
 כל טופס הוא מכל יציב; התוכן (כותרת/תיאור/שדות) חי על **גרסאות** (`FormVersion`) בלתי-ניתנות-לשינוי. "שמירה" אף פעם לא עורכת גרסה קיימת — היא יוצרת את הבאה. פרסום הוא פעולה נפרדת ומפורשת על גרסה ספציפית. פירוט מלא ב-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), בסעיף Version History.
 
-זרימה טיפוסית של מבקר באתר חיצוני, כולל כשה-SDK רץ בתוך WebView באפליקציית מובייל (`sdk/client` / `mobile-demo-app`) — **ללא מפתח**:
+זרימה טיפוסית של מבקר באתר חיצוני (`sdk/client`) — **ללא מפתח**:
 
 ```
 1. GET  /api/v1/public/forms/:formId             → שליפת סכמת הגרסה המפורסמת בלבד
@@ -283,4 +268,4 @@ const summary = await client.getAnalyticsSummary(form.id);
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — הסבר אדריכלי מעמיק על כל רכיב, מודל הנתונים, וההחלטה לעבוד עם Neon.
 - [docs/TESTING.md](docs/TESTING.md) — מדריך לבדיקת ה-flow המלא מקצה לקצה.
 - [backend/README.md](backend/README.md) — מפת endpoints מלאה.
-- [sdk/client/README.md](sdk/client/README.md), [sdk/server/README.md](sdk/server/README.md), [mobile-demo-app/README.md](mobile-demo-app/README.md) — תיעוד ספציפי לכל חבילה.
+- [sdk/client/README.md](sdk/client/README.md), [sdk/server/README.md](sdk/server/README.md) — תיעוד ספציפי לכל חבילה.

@@ -10,7 +10,7 @@
 |---|---|---|
 | נתיב בסיס | `/api/v1/forms`, `/api/v1/api-keys` | `/api/v1/public/forms/:formId/...` |
 | אימות | כותרת `x-api-key` (מפתח סודי, נבדק מול טבלת `ApiKey`) | אין אימות בכלל |
-| מי קורא | Developer Portal, `sdk/server` | `sdk/client` (רץ בדפדפן משתמש קצה, כולל בתוך WebView באפליקציות מובייל כמו `mobile-demo-app`) |
+| מי קורא | Developer Portal, `sdk/server` | `sdk/client` (רץ בדפדפן משתמש קצה) |
 | מה חשוף | כל הטפסים של בעל המפתח, כולל draft, רשימות, מחיקה, אנליטיקס מסכם | רק טופס בודד לפי `formId`, ורק אם `isPublished === true` |
 
 הסיבה לעיצוב הזה: `sdk/client` חייב לרוץ בדפדפן של מבקר אנונימי באתר צד שלישי. אם הוא היה שולח את מפתח ה-API הסודי, כל אחד שפותח DevTools היה יכול לגנוב אותו ולקבל גישה מלאה לכל הטפסים, ה-submissions וה-API keys של בעל החשבון. הפתרון, כמו ב-Stripe (`pk_` מול `sk_`) או Typeform: **מזהה הטופס (`formId`) הוא ציבורי בעיצומו** — מי שיודע אותו יכול לצפות בטופס ולהגיש תשובה, אבל לא יכול לרשום, לערוך, למחוק, או לראות טפסים אחרים. אין בכך פגיעה באבטחה כי זו בדיוק התכונה שצריך טופס מוטמע — מישהו שמבקר בעמוד שמכיל את הטופס *כבר* רואה את ה-`formId` בקוד המקור.
@@ -71,10 +71,6 @@ routes → controllers → services → Prisma (models)
 ## Server SDK (`sdk/server`)
 
 חבילת Node.js (TypeScript, `tsup`, ESM+CJS) עם מחלקת `DynamicFormsClient` שעוטפת את **כל** הנתיבים הפרטיים (`createForm`, `listForms`, `deleteForm`, `createVersion`, `listVersions`, `publishVersion`, `unpublish`, `restoreVersion`, `listSubmissions`, `getAnalyticsSummary`, `createApiKey` וכו') באמצעות `fetch` + כותרת `x-api-key`. מיועדת לרוץ רק בקוד שרת — אם מפתח חיצוני מטמיע אותה בקוד צד-לקוח, המפתח הסודי שלו יישלח לדפדפן. ה-README של החבילה מזהיר על כך במפורש.
-
-## mobile-demo-app
-
-לא רכיב פרודקשן — קיים רק כדי להוכיח את חוויית האינטגרציה בצד מובייל. מכיוון ש-`sdk/client` הוא קוד דפדפן (DOM), הוא לא יכול לרוץ ישירות כרכיבי React Native: הפתרון הוא `WebView` שטוען את אותו HTML/JS שהיה נטען באתר, מוצג כ-bottom sheet מעל מסך native קיים. ה-bundle (`sdk/client/dist/index.global.js`) מוטמע כמחרוזת בקוד (`src/sdkBundle.ts`, נוצר אוטומטית ע"י `npm run sync-sdk`) במקום להיטען מ-URL, כי Metro לא יודע לטעון קובץ מ-`node_modules` כטקסט גולמי בזמן ריצה. תקשורת בין ה-WebView לצד ה-native עוברת דרך `window.ReactNativeWebView.postMessage` בתוך `onSubmit`/`onError`.
 
 ## Version History לטפסים
 
