@@ -8,6 +8,7 @@ export default defineConfig({
   // Served at https://hadarkaner.github.io/dynamic-forms-sdk/ — a GitHub Pages
   // project site is mounted under /<repo-name>/, not the domain root.
   base: "/dynamic-forms-sdk/",
+  ignoreDeadLinks: false,
 
   themeConfig: {
     nav: [
