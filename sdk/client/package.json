@@ -1,0 +1,19 @@
+{
+  "name": "@dynamic-forms-sdk/client",
+  "version": "1.0.0",
+  "description": "Browser SDK for embedding Dynamic Forms SDK forms, collecting submissions, and tracking analytics events.",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "unpkg": "dist/index.global.js",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.2.4",
+    "typescript": "^5.5.4"
+  }
+}

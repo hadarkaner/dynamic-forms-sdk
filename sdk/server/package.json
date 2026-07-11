@@ -1,0 +1,18 @@
+{
+  "name": "@dynamic-forms-sdk/server",
+  "version": "1.0.0",
+  "description": "Node.js SDK for managing Dynamic Forms SDK forms, submissions, and analytics using a secret API key. Server-side only — never expose the API key in a browser.",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.2.4",
+    "typescript": "^5.5.4"
+  }
+}
