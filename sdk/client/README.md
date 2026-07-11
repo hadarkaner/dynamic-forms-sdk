@@ -18,6 +18,20 @@ const form = new DynamicForm({
 form.mount();
 ```
 
+### Slots — swap which form is embedded without a code change
+
+Instead of hardcoding a `formId`, embed a stable **slot** key and assign it to a published form from the Developer Portal. The SDK resolves the slot to a form on every `mount()`, so the admin can point it at a different form entirely — not just publish a new version of the same one — with no change on the embedding side:
+
+```ts
+DynamicForm.open({
+  baseUrl: "https://api.example.com/api/v1",
+  slot: "main-survey",
+  container: "#form-container",
+});
+```
+
+`DynamicForm.open(options)` is shorthand for `new DynamicForm(options).mount()` that also returns the instance (e.g. to call `.unmount()` later). Provide exactly one of `formId` or `slot` — mixing both, or providing neither, throws.
+
 ## Usage (plain `<script>` tag)
 
 ```html

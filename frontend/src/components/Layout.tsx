@@ -3,6 +3,7 @@ import { useConnection } from "../hooks/useConnection";
 
 const navItems = [
   { to: "/", label: "Forms" },
+  { to: "/form-slots", label: "Form Slots" },
   { to: "/api-keys", label: "API Keys" },
 ];
 

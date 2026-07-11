@@ -24,7 +24,7 @@
 2. בכל פעם שה-SDK עולה (טעינת עמוד), הוא שולף מחדש מ-`GET /api/v1/public/forms/:formId` את **הגרסה שמפורסמת כרגע** — אין caching, ואין "תוכן קבוע" שנכתב בזמן הבנייה.
 3. כשבעל הטופס עורך אותו בפורטל ולוחץ **Publish** על גרסה חדשה, האתר החיצוני מקבל את התוכן המעודכן **באופן מיידי** בטעינה הבאה — בלי שהמפתח נגע בקוד שלו ובלי שהוא צריך לדעת שבכלל קיים מנגנון גרסאות.
 
-זה אפשרי כי `formId` מזהה את ה**טופס** (מכל יציב), לא גרסה ספציפית — וה-API הציבורי שומר על צורת תשובה שטוחה ועקבית בלי לחשוף את מודל הגרסאות בכלל. פירוט אדריכלי מלא ותרחיש בדיקה מלא נמצאים ב-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) וב-[docs/TESTING.md](docs/TESTING.md) בהתאמה.
+זה אפשרי כי `formId` מזהה את ה**טופס** (מכל יציב), לא גרסה ספציפית — וה-API הציבורי שומר על צורת תשובה שטוחה ועקבית בלי לחשוף את מודל הגרסאות בכלל. פירוט אדריכלי מלא ותרחיש בדיקה מלא נמצאים ב-[docs/implementation.md](docs/implementation.md) וב-[docs/testing.md](docs/testing.md) בהתאמה — או באתר התיעוד המלא (`cd docs && npm run docs:dev`).
 
 ## ארכיטקטורה (תרשים טקסטואלי)
 
@@ -177,7 +177,7 @@ x-api-key: dfsdk_xxxxxxxxxxxxxxxxxxxx
 7. GET   /api/v1/forms/:id/events/summary       → סיכום אנליטיקס (x-api-key)
 ```
 
-כל טופס הוא מכל יציב; התוכן (כותרת/תיאור/שדות) חי על **גרסאות** (`FormVersion`) בלתי-ניתנות-לשינוי. "שמירה" אף פעם לא עורכת גרסה קיימת — היא יוצרת את הבאה. פרסום הוא פעולה נפרדת ומפורשת על גרסה ספציפית. פירוט מלא ב-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), בסעיף Version History.
+כל טופס הוא מכל יציב; התוכן (כותרת/תיאור/שדות) חי על **גרסאות** (`FormVersion`) בלתי-ניתנות-לשינוי. "שמירה" אף פעם לא עורכת גרסה קיימת — היא יוצרת את הבאה. פרסום הוא פעולה נפרדת ומפורשת על גרסה ספציפית. פירוט מלא ב-[docs/implementation.md](docs/implementation.md), בסעיף Version History.
 
 זרימה טיפוסית של מבקר באתר חיצוני (`sdk/client`) — **ללא מפתח**:
 
@@ -223,6 +223,14 @@ form.mount();
 </script>
 ```
 
+במקום `formId` קבוע, אפשר להטמיע **slot** יציב (למשל `"main-survey"`) ולשייך/להחליף לאיזה טופס הוא מצביע מהפורטל, בלי לגעת בקוד המוטמע:
+
+```ts
+DynamicForm.open({ baseUrl: "https://api.example.com/api/v1", slot: "main-survey", container: "#form-container" });
+```
+
+פירוט מלא באתר התיעוד, בעמוד [How to Use](docs/how-to-use.md).
+
 ### sdk/server — ניהול מקוד שרת
 
 ```ts
@@ -265,7 +273,8 @@ const summary = await client.getAnalyticsSummary(form.id);
 
 ## תיעוד נוסף
 
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — הסבר אדריכלי מעמיק על כל רכיב, מודל הנתונים, וההחלטה לעבוד עם Neon.
-- [docs/TESTING.md](docs/TESTING.md) — מדריך לבדיקת ה-flow המלא מקצה לקצה.
+- אתר תיעוד מלא (VitePress): `cd docs && npm install && npm run docs:dev`.
+- [docs/implementation.md](docs/implementation.md) — הסבר אדריכלי מעמיק על כל רכיב, מודל הנתונים, וההחלטה לעבוד עם Neon.
+- [docs/testing.md](docs/testing.md) — מדריך לבדיקת ה-flow המלא מקצה לקצה.
 - [backend/README.md](backend/README.md) — מפת endpoints מלאה.
 - [sdk/client/README.md](sdk/client/README.md), [sdk/server/README.md](sdk/server/README.md) — תיעוד ספציפי לכל חבילה.

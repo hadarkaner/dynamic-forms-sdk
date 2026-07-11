@@ -5,6 +5,7 @@ import {
   CreateFormInput,
   CreateVersionInput,
   Form,
+  FormSlot,
   FormSubmission,
   FormVersion,
 } from "./types";
@@ -125,6 +126,28 @@ export class DynamicFormsClient {
 
   getAnalyticsSummary(formId: string): Promise<AnalyticsSummary> {
     return this.request<AnalyticsSummary>(`/forms/${formId}/events/summary`);
+  }
+
+  // Form slots — a stable key an embedding app holds; reassign which form it
+  // resolves to (or unassign, with `null`) without any change on that side.
+
+  createFormSlot(input: { key: string; formId?: string | null }): Promise<FormSlot> {
+    return this.request<FormSlot>("/form-slots", { method: "POST", body: JSON.stringify(input) });
+  }
+
+  listFormSlots(): Promise<FormSlot[]> {
+    return this.request<FormSlot[]>("/form-slots");
+  }
+
+  assignFormSlot(slotId: string, formId: string | null): Promise<FormSlot> {
+    return this.request<FormSlot>(`/form-slots/${slotId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ formId }),
+    });
+  }
+
+  deleteFormSlot(slotId: string): Promise<void> {
+    return this.request<void>(`/form-slots/${slotId}`, { method: "DELETE" });
   }
 
   // API keys

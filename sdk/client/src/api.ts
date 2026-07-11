@@ -19,6 +19,18 @@ export const fetchForm = (baseUrl: string, formId: string): Promise<FormSchema> 
   return request<FormSchema>(`${baseUrl}/public/forms/${formId}`);
 };
 
+interface ResolvedFormSlot {
+  slot: string;
+  formId: string;
+  versionId: string;
+}
+
+// Resolved fresh on every mount() — the whole point of a slot is that which form
+// (and which of its versions) answers it can change between visits.
+export const resolveFormSlot = (baseUrl: string, slot: string): Promise<ResolvedFormSlot> => {
+  return request<ResolvedFormSlot>(`${baseUrl}/public/form-slots/${slot}`);
+};
+
 export const submitForm = (
   baseUrl: string,
   formId: string,

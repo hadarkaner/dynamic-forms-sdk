@@ -114,3 +114,15 @@ export interface ApiKey {
   createdAt: string;
   updatedAt: string;
 }
+
+// A stable pointer to a Form — an embedding app holds the `key` (e.g. "main-survey")
+// while which form it resolves to (`formId`) can be reassigned from the portal or
+// this client, with no change on the embedding side.
+export interface FormSlot {
+  id: string;
+  key: string;
+  formId: string | null;
+  formTitle: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -11,6 +11,7 @@ import { createAnalyticsEventSchema } from "../models/analyticsEvent.model";
 const router = Router();
 
 router.get("/forms/:formId", PublicController.getForm);
+router.get("/form-slots/:key", PublicController.resolveFormSlot);
 router.post(
   "/forms/:formId/submissions",
   validateBody(createSubmissionSchema),

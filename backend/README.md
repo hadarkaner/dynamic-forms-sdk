@@ -70,6 +70,15 @@ Use the returned `key` value as `x-api-key` on subsequent requests.
 - `GET /` — list events
 - `GET /summary` — aggregated counts by type + conversion rate (submit / view)
 
+### Form Slots (`/api/v1/form-slots`)
+A slot is a stable key (e.g. `main-survey`) an embedding app holds onto — reassign which form it points to from the portal, any time, with no app-side change. `key` is globally unique across all API keys (the public resolution endpoint has no api-key context to scope by).
+- `POST /` — create a slot (`{ key, formId? }`)
+- `GET /` — list slots for this API key
+- `PATCH /:id` — reassign (`{ formId }`, `null` to unassign)
+- `DELETE /:id` — delete a slot
+
+Public resolution (`/api/v1/public/form-slots/:key`, no auth) — `GET /` returns `{ slot, formId, versionId }` for whichever form is currently assigned and has a published version; 404 if the slot doesn't exist, nothing is assigned, or the assigned form has nothing published.
+
 ### API Keys (`/api/v1/api-keys`)
 - `POST /` — create a key
 - `GET /` — list keys

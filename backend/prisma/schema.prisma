@@ -38,7 +38,8 @@ model ApiKey {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  forms Form[]
+  forms     Form[]
+  formSlots FormSlot[]
 
   @@map("api_keys")
 }
@@ -56,9 +57,32 @@ model Form {
   versions        FormVersion[]
   submissions     FormSubmission[]
   analyticsEvents AnalyticsEvent[]
+  formSlots       FormSlot[]
 
   @@index([apiKeyId])
   @@map("forms")
+}
+
+// A named, stable pointer to a Form — lets an embedding app hold a fixed slot key
+// (e.g. "main-survey") while the admin swaps which published form answers it,
+// entirely from the portal, with no app-side change or release. `key` is globally
+// unique (not just per-ApiKey): the public resolution endpoint has no api-key
+// context to disambiguate by, the same tradeoff `Form.id` already makes as a public
+// identifier. `formId` is nullable — a slot can exist unassigned.
+model FormSlot {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  apiKeyId String
+  apiKey   ApiKey @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+
+  formId String?
+  form   Form?   @relation(fields: [formId], references: [id], onDelete: SetNull)
+
+  @@index([apiKeyId])
+  @@map("form_slots")
 }
 
 // Versions are immutable once created. "Current" = highest versionNumber for the form.

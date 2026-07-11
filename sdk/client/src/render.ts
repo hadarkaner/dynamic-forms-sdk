@@ -1,4 +1,4 @@
-import { fetchForm, submitForm, trackEvent } from "./api";
+import { fetchForm, resolveFormSlot, submitForm, trackEvent } from "./api";
 import { injectDefaultStyles } from "./styles";
 import { DynamicFormOptions, FormField, FormSchema } from "./types";
 
@@ -209,6 +209,10 @@ export class DynamicForm {
   private options: DynamicFormOptions;
   private container: HTMLElement;
   private schema?: FormSchema;
+  // Resolved once per mount(): either options.formId directly, or the formId a
+  // slot currently points to. Everything below this point (fetching, submitting,
+  // tracking, storage keys) uses this — never options.formId/options.slot directly.
+  private formId?: string;
   private hasStarted = false;
   private hasSubmitted = false;
   private formEl?: HTMLFormElement;
@@ -217,6 +221,10 @@ export class DynamicForm {
   private retryTimer?: ReturnType<typeof setInterval>;
 
   constructor(options: DynamicFormOptions) {
+    if (!options.formId === !options.slot) {
+      throw new Error("DynamicForm: provide exactly one of `formId` or `slot`");
+    }
+
     this.options = options;
     const target =
       typeof options.container === "string"
@@ -233,12 +241,24 @@ export class DynamicForm {
     window.addEventListener("online", this.handleOnline);
   }
 
+  // Convenience: `DynamicForm.open(options)` is `new DynamicForm(options).mount()`
+  // that also hands back the instance (e.g. to call `unmount()` later).
+  static open(options: DynamicFormOptions): DynamicForm {
+    const instance = new DynamicForm(options);
+    void instance.mount();
+    return instance;
+  }
+
   async mount(): Promise<void> {
     try {
-      this.schema = await fetchForm(this.options.baseUrl, this.options.formId);
+      // Resolved fresh on every mount — a slot's target form (or a form's published
+      // version) can change between visits with no change needed on the embedding side.
+      this.formId = this.options.formId ?? (await resolveFormSlot(this.options.baseUrl, this.options.slot!)).formId;
+
+      this.schema = await fetchForm(this.options.baseUrl, this.formId);
       this.renderForm(this.schema);
       this.restoreSavedState(this.schema);
-      void trackEvent(this.options.baseUrl, this.options.formId, "VIEW");
+      void trackEvent(this.options.baseUrl, this.formId, "VIEW");
     } catch (error) {
       this.options.onError?.(error as Error);
     }
@@ -253,7 +273,7 @@ export class DynamicForm {
 
   private handleAbandon = (): void => {
     if (this.hasStarted && !this.hasSubmitted && !this.isPending) {
-      void trackEvent(this.options.baseUrl, this.options.formId, "ABANDON");
+      void trackEvent(this.options.baseUrl, this.formId!, "ABANDON");
     }
   };
 
@@ -262,11 +282,11 @@ export class DynamicForm {
   };
 
   private draftKey(): string {
-    return `dfsdk_draft_${this.options.formId}`;
+    return `dfsdk_draft_${this.formId}`;
   }
 
   private pendingKey(): string {
-    return `dfsdk_pending_${this.options.formId}`;
+    return `dfsdk_pending_${this.formId}`;
   }
 
   private collectValues(schema: FormSchema, form: HTMLFormElement): Record<string, unknown> {
@@ -351,10 +371,10 @@ export class DynamicForm {
     if (!schema || !pending || this.hasSubmitted) return;
 
     try {
-      await submitForm(this.options.baseUrl, this.options.formId, pending.data);
+      await submitForm(this.options.baseUrl, this.formId!, pending.data);
       this.hasSubmitted = true;
       this.clearSavedState();
-      void trackEvent(this.options.baseUrl, this.options.formId, "SUBMIT", { wasOffline: true });
+      void trackEvent(this.options.baseUrl, this.formId!, "SUBMIT", { wasOffline: true });
       this.renderSuccess(schema.theme);
       this.options.onSubmit?.(pending.data);
     } catch {
@@ -365,7 +385,7 @@ export class DynamicForm {
   private markStarted(): void {
     if (!this.hasStarted) {
       this.hasStarted = true;
-      void trackEvent(this.options.baseUrl, this.options.formId, "START");
+      void trackEvent(this.options.baseUrl, this.formId!, "START");
     }
   }
 
@@ -397,12 +417,12 @@ export class DynamicForm {
         const fieldEl = createFieldInput(field);
         fieldEl.addEventListener("focusin", () => {
           this.markStarted();
-          void trackEvent(this.options.baseUrl, this.options.formId, "FIELD_FOCUS", {
+          void trackEvent(this.options.baseUrl, this.formId!, "FIELD_FOCUS", {
             fieldId: field.id,
           });
         });
         fieldEl.addEventListener("change", () => {
-          void trackEvent(this.options.baseUrl, this.options.formId, "FIELD_CHANGE", {
+          void trackEvent(this.options.baseUrl, this.formId!, "FIELD_CHANGE", {
             fieldId: field.id,
           });
         });
@@ -484,10 +504,10 @@ export class DynamicForm {
     }
 
     try {
-      await submitForm(this.options.baseUrl, this.options.formId, data);
+      await submitForm(this.options.baseUrl, this.formId!, data);
       this.hasSubmitted = true;
       this.clearSavedState();
-      void trackEvent(this.options.baseUrl, this.options.formId, "SUBMIT");
+      void trackEvent(this.options.baseUrl, this.formId!, "SUBMIT");
       this.renderSuccess(schema.theme);
       this.options.onSubmit?.(data);
     } catch (error) {
@@ -497,7 +517,7 @@ export class DynamicForm {
         return;
       }
 
-      void trackEvent(this.options.baseUrl, this.options.formId, "ERROR", {
+      void trackEvent(this.options.baseUrl, this.formId!, "ERROR", {
         message: (error as Error).message,
       });
       this.options.onError?.(error as Error);

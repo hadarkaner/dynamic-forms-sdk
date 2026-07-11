@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { FormService } from "../services/form.service";
+import { FormSlotService } from "../services/formSlot.service";
 import { SubmissionService } from "../services/submission.service";
 import { AnalyticsEventService } from "../services/analyticsEvent.service";
 import { asyncHandler } from "../utils/asyncHandler";
@@ -8,6 +9,11 @@ export const PublicController = {
   getForm: asyncHandler(async (req: Request, res: Response) => {
     const form = await FormService.findPublishedById(req.params.formId);
     res.status(200).json({ success: true, data: form });
+  }),
+
+  resolveFormSlot: asyncHandler(async (req: Request, res: Response) => {
+    const resolved = await FormSlotService.resolvePublic(req.params.key);
+    res.status(200).json({ success: true, data: resolved });
   }),
 
   createSubmission: asyncHandler(async (req: Request, res: Response) => {
