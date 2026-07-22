@@ -273,6 +273,7 @@ const summary = await client.getAnalyticsSummary(form.id);
 
 ## תיעוד נוסף
 
+- [סרטוני הדגמה](https://hadarkaner.github.io/dynamic-forms-sdk/video) — הסבר קצר בוידאו על צד המפתח (הפורטל) וצד המשתמש הסופי (מילוי הטופס).
 - אתר תיעוד מלא (VitePress): `cd docs && npm install && npm run docs:dev`.
 - [docs/implementation.md](docs/implementation.md) — הסבר אדריכלי מעמיק על כל רכיב, מודל הנתונים, וההחלטה לעבוד עם Neon.
 - [docs/testing.md](docs/testing.md) — מדריך לבדיקת ה-flow המלא מקצה לקצה.
